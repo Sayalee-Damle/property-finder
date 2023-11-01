@@ -6,6 +6,8 @@ import autogen
 
 from linkedin_summarizer.configuration.config import cfg
 
+### This has the code for a trial autogen and langchain tool structure
+
 
 class CircumferenceToolInput(BaseModel):
     radius: float = Field()

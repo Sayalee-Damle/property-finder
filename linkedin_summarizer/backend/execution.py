@@ -53,7 +53,7 @@ def get_key(user_msg):
     return match_properties(key)
 
 def find_houses(key: str):
-    website = create_post_message(key)
+    website = create_get_message(key)
     logger.info(website)
 
     task = f"""
@@ -86,7 +86,7 @@ def match_properties(type_of_property: str):
         if property_types[i] == type_of_property.lower():
             return property_types[i]
         
-def create_post_message(key: str):
+def create_get_message(key: str):
     url = f"https://search.savills.com/in/en/list?SearchList=Id_1243+Category_RegionCountyCountry&Tenure=GRS_T_B&SortOrder=SO_PCDD&Currency=INR&PropertyTypes={key}&ResidentialSizeUnit=SquareFeet&LandAreaUnit=Acre&Category=GRS_CAT_RES&Shapes=W10"
     return url
 

@@ -16,7 +16,7 @@ This creates a specific environment with all the libraries in need!
 
 
 ## to start the project
-```chainlit run .\transcriber\frontend\main.py```
+```chainlit run .\linkedin_summary\backend\execution.py```
 
 
 
@@ -29,14 +29,19 @@ To specify configurations use .env file
 OPENAI_API_KEY = openaikey
 OPENAI_MODEL = gpt-3.5-turbo-16k-0613
 CHUNK_SIZE = 1000
-TEXT_PATH_DISC = /TranscribedText/
-PROJECT_ROOT =  (mention the root folder)/transcriber
+TERMINATE_TOKEN =  TERMINATE
 REQUEST_TIMEOUT = 300
-LLM_CACHE = False
-VERBOSE_LLM = True
-TOKEN_LIMIT = 13000
-TEXT_FILES_PATH = /tmp/transcribe/
-AUDIO_FILE = /tmp/audio/
-
+SEED = 42
+TEMPERATURE = 0
+MAX_AUTO_REPLY = 4
+CODE_DIR = /tmp/linkedin_summarizer
 ```
+## Flow of the project function wise
+get_key --->  tool is used to find the keyword ---> create_get_message ---> find_houses
 
+### steps in tool
+find_keywords ---> match_properties ---> return keyword
+
+Problems faced: 
+The value returned is in a sentence format/None from the Autogen 'find_keywords' method, have to extract the key from it. 
+Tried the same in langchain but gave a similar result

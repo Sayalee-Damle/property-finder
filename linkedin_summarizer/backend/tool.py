@@ -15,6 +15,9 @@ from langchain.chains import LLMChain
 
 import linkedin_summarizer.backend.execution as exec
 
+
+### Tool for finding houses
+
 class HouseFinderToolInput(BaseModel):
     type_of_property: str = Field()
 
@@ -24,8 +27,8 @@ class HouseFinderTool(BaseTool):
     args_schema: Type[BaseModel] = HouseFinderToolInput
 
     def _run(self, user_needs: str, type_of_property: str, key: str):
-        key: str = exec.find_keywords(user_needs)
-        #key: str = exec.match_properties(type_of_property)
+        key: str = exec.find_keywords(user_needs)   #find keywords which match the API requirements
+        key: str = exec.match_properties(type_of_property)
         return key
 
 
