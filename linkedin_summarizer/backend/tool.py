@@ -15,7 +15,7 @@ from langchain.prompts.chat import (
 from langchain.chains import LLMChain
 
 import linkedin_summarizer.backend.execution as exec
-
+from linkedin_summarizer.configuration.log_factory import logger
 
 ### Tool for finding houses
 
@@ -27,7 +27,7 @@ PROPERTY_TYPES = {
     "bungalow": "GRS_T_B",
     "comdominium": "GRS_PT_CONDO",
     "duplex": "GRS_PT_D",
-    "appartment": "GRS_PT_APT",
+    "apartment": "GRS_PT_APT",
     "house": "GRS_PT_H",
     "penthouse": "GRS_PT_PENT",
     "serviced appartment": "GRS_PT_SAPT",
@@ -35,6 +35,14 @@ PROPERTY_TYPES = {
     "triplex": "GRS_PT_T",
 }
 
+MIN_BEDROOMS = {
+    1: "GRS_B_1",
+    2: "GRS_B_2",
+    3: "GRS_B_3",
+    4: "GRS_B_4",
+    5: "GRS_B_5",
+    6: "GRS_B_6"
+}
 
 class HouseFinderToolInput(BaseModel):
     type_of_property: str = Field()
@@ -45,13 +53,15 @@ class HouseFinderTool(BaseTool):
     description = "Use this tool when you need to find a house"
     args_schema: Type[BaseModel] = HouseFinderToolInput
 
-    def _run(self, user_needs: str, type_of_property: str, key: str):
+    def _run(self, type_of_property: str, min_no_bedrooms: int):
         property_code = PROPERTY_TYPES.get(type_of_property)
-        if property_code is None:
+        min_bedrooms_code = MIN_BEDROOMS.get(min_no_bedrooms)
+        logger.info(property_code)
+        if property_code == None or min_bedrooms_code == None:
             available_property_types = list(PROPERTY_TYPES.keys())
             return f"Could not find property type: {type_of_property}. Available property types: {available_property_types}"
-        return requests.get(f"https://search.savills.com/in/en/list?SearchList=Id_1243+Category_RegionCountyCountry&Tenure=GRS_T_B&SortOrder=SO_PCDD&Currency=INR&PropertyTypes={property_code}&Bedrooms=-1&Bathrooms=-1&CarSpaces=-1&Receptions=-1&ResidentialSizeUnit=SquareFeet&LandAreaUnit=Acre&Category=GRS_CAT_RES&Shapes=W10")
-
+        url_property  = requests.get(f"https://search.savills.com/in/en/list?SearchList=Id_1243+Category_RegionCountyCountry&Tenure=GRS_T_B&SortOrder=SO_PCDD&Currency=INR&PropertyTypes={property_code}&Bedrooms=GRS_B_{min_bedrooms_code}&Bathrooms=-1&CarSpaces=-1&Receptions=-1&ResidentialSizeUnit=SquareFeet&LandAreaUnit=Acre&Category=GRS_CAT_RES&Shapes=W10")
+        return url_property
 
 def generate_llm_config(tool):
     # Define the function schema based on the tool's args_schema
@@ -72,3 +82,10 @@ def generate_llm_config(tool):
 
 
 house_finder_tool = HouseFinderTool()
+
+if __name__ == "__main__":
+    html = house_finder_tool.run('villa')
+    logger.info(html)
+    content = html.content
+    with open("/tmp/savills.txt", "wb") as f:
+        f.write(content)

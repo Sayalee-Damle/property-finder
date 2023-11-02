@@ -19,7 +19,7 @@ assistant = autogen.AssistantAgent(
 
 chatbot = autogen.AssistantAgent(
     name="chatbot",
-    system_message="Give the keyword, only use the functions you have been provided with. Reply TERMINATE when the task is done.",
+    system_message="to find the property code, only use the functions you have been provided with. Reply TERMINATE when the task is done.",
     llm_config=cfg.llm_config,
 )
 
