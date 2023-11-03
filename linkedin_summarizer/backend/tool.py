@@ -20,6 +20,8 @@ from linkedin_summarizer.configuration.config import cfg
 from langchain.agents import AgentType, initialize_agent
 from langchain.llms import OpenAI
 import linkedin_summarizer.langchain_agent.extract_properties as ep
+from typing import Optional, Union
+from bs4 import BeautifulSoup
 
 ### Tool for finding houses
 
@@ -49,27 +51,39 @@ MIN_BEDROOMS = {
 }
 
 class HouseFinderToolInput(BaseModel):
-    type_of_property: str = Field()
-
+    type_of_property: Union[str, None] = Field(..., description="The name of the index for which the data is to be retrieved")
+    no_of_bedrooms: Union[int, None] = Field(..., description = "The number of bedrooms in the property")
 
 class HouseFinderTool(BaseTool):
     name = "house_finder"
     description = "Use this tool when you need to find a house"
     args_schema: Type[BaseModel] = HouseFinderToolInput
 
-    def _run(self, user_input: str):
-        properties = ep.extract_properties(user_input)
-        logger.info(properties)
-        property_code = PROPERTY_TYPES.get(properties.get("property type").lower())
+    def _run(self, type_of_property: Union[str, None], no_of_bedrooms: Union[int, None] = -1):
+        property_code = PROPERTY_TYPES.get(type_of_property.lower())
+        if no_of_bedrooms != -1:
+            bedroom_code = MIN_BEDROOMS.get(no_of_bedrooms - 1) 
         logger.info(property_code)
-        min_no_bedrooms = properties.get("minimum number of bedrooms")
-        url_property  = requests.get(f"https://search.savills.com/in/en/list?SearchList=Id_1243+Category_RegionCountyCountry&Tenure=GRS_T_B&SortOrder=SO_PCDD&Currency=INR&PropertyTypes={property_code}&Bedrooms=GRS_B_{min_no_bedrooms}&Bathrooms=-1&CarSpaces=-1&Receptions=-1&ResidentialSizeUnit=SquareFeet&LandAreaUnit=Acre&Category=GRS_CAT_RES&Shapes=W10")
-        if url_property.status_code == 500:
-            return f"Could not find property."
-        content = url_property.content
-        with open(cfg.save_html_path/"savills.txt", "wb") as f:
-            f.write(content)
-        return url_property
+        if property_code != None:
+            url_property  = requests.get(f"https://search.savills.com/in/en/list?SearchList=Id_1243+Category_RegionCountyCountry&Tenure=GRS_T_B&SortOrder=SO_PCDD&Currency=INR&PropertyTypes={property_code}&Bedrooms={bedroom_code}&Bathrooms=-1&CarSpaces=-1&Receptions=-1&ResidentialSizeUnit=SquareFeet&LandAreaUnit=Acre&Category=GRS_CAT_RES&Shapes=W10")
+        else:
+            url_property  = requests.get(f"https://search.savills.com/in/en/list?SearchList=Id_1243+Category_RegionCountyCountry&Tenure=GRS_T_B&SortOrder=SO_PCDD&Currency=INR&&Bedrooms={bedroom_code}&Bathrooms=-1&CarSpaces=-1&Receptions=-1&ResidentialSizeUnit=SquareFeet&LandAreaUnit=Acre&Category=GRS_CAT_RES&Shapes=W10")
+        if url_property.status_code == 200:
+            content = url_property.content
+            with open(cfg.save_html_path/"savills.txt", "wb") as f:
+                f.write(content)
+            html_text = BeautifulSoup(content)
+            with open(cfg.save_html_path/"savills_text.txt", "wb") as f:
+                f.write(html_text.get_text())
+           
+            return True
+        
+        elif url_property.status_code >= 500:
+            return "Server Error"
+        elif url_property.status_code >= 400:
+            return "Bad Request"
+        else:
+            return  f"{url_property.status_code},Unkown Error"
 
 def generate_llm_config(tool):
     # Define the function schema based on the tool's args_schema
@@ -91,11 +105,11 @@ def generate_llm_config(tool):
 
 house_finder_tool = HouseFinderTool()
 agent = initialize_agent(
-    [HouseFinderTool()], cfg.llm, agent=AgentType.STRUCTURED_CHAT_ZERO_SHOT_REACT_DESCRIPTION, verbose=True
+    [HouseFinderTool()], cfg.llm, agent=AgentType.OPENAI_FUNCTIONS, verbose=False
 )
 
 if __name__ == "__main__":
-    html = house_finder_tool.run('house with 2 bedrooms')
+    html = agent.run('I want to buy a bangalow of 4 bedrooms')
     logger.info(html)
     #content = html.content
     #with open("/tmp/savills.txt", "wb") as f:
