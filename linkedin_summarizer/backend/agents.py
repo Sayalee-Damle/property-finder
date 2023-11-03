@@ -3,8 +3,8 @@ from linkedin_summarizer.configuration.config import cfg
 from linkedin_summarizer.configuration.log_factory import logger
 import linkedin_summarizer.backend.execution as exec
 
-from langchain.agents import Tool, AgentExecutor, BaseSingleActionAgent,initialize_agent, AgentType
-from linkedin_summarizer.backend.tool import house_finder_tool
+
+
 
 import openai
 

@@ -37,7 +37,11 @@ class Config:
         cache=llm_cache,
         streaming=True,
     )
-    
+    save_html_path = Path(os.getenv("SAVE_HTML"))
+
+    if not save_html_path.exists():
+        save_html_path.mkdir(exist_ok=True, parents=True)
+
 cfg = Config()
 
 

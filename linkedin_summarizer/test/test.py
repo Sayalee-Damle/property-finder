@@ -6,5 +6,5 @@ from linkedin_summarizer.backend.tool import house_finder_tool
 
 def test_type_property_exists():
     html = house_finder_tool.run('villa')
-    assert html.content, "Property exists"
+    assert html.status_code == '200', "Property exists"
     

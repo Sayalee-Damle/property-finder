@@ -16,6 +16,10 @@ from langchain.chains import LLMChain
 
 import linkedin_summarizer.backend.execution as exec
 from linkedin_summarizer.configuration.log_factory import logger
+from linkedin_summarizer.configuration.config import cfg
+from langchain.agents import AgentType, initialize_agent
+from langchain.llms import OpenAI
+import linkedin_summarizer.langchain_agent.extract_properties as ep
 
 ### Tool for finding houses
 
@@ -24,7 +28,7 @@ from linkedin_summarizer.configuration.log_factory import logger
 
 PROPERTY_TYPES = {
     "villa": "GRS_PT_V",
-    "bungalow": "GRS_T_B",
+    "bungalow": "GRS_PT_B",
     "comdominium": "GRS_PT_CONDO",
     "duplex": "GRS_PT_D",
     "apartment": "GRS_PT_APT",
@@ -53,14 +57,18 @@ class HouseFinderTool(BaseTool):
     description = "Use this tool when you need to find a house"
     args_schema: Type[BaseModel] = HouseFinderToolInput
 
-    def _run(self, type_of_property: str, min_no_bedrooms: int):
-        property_code = PROPERTY_TYPES.get(type_of_property)
-        min_bedrooms_code = MIN_BEDROOMS.get(min_no_bedrooms)
+    def _run(self, user_input: str):
+        properties = ep.extract_properties(user_input)
+        logger.info(properties)
+        property_code = PROPERTY_TYPES.get(properties.get("property type").lower())
         logger.info(property_code)
-        if property_code == None or min_bedrooms_code == None:
-            available_property_types = list(PROPERTY_TYPES.keys())
-            return f"Could not find property type: {type_of_property}. Available property types: {available_property_types}"
-        url_property  = requests.get(f"https://search.savills.com/in/en/list?SearchList=Id_1243+Category_RegionCountyCountry&Tenure=GRS_T_B&SortOrder=SO_PCDD&Currency=INR&PropertyTypes={property_code}&Bedrooms=GRS_B_{min_bedrooms_code}&Bathrooms=-1&CarSpaces=-1&Receptions=-1&ResidentialSizeUnit=SquareFeet&LandAreaUnit=Acre&Category=GRS_CAT_RES&Shapes=W10")
+        min_no_bedrooms = properties.get("minimum number of bedrooms")
+        url_property  = requests.get(f"https://search.savills.com/in/en/list?SearchList=Id_1243+Category_RegionCountyCountry&Tenure=GRS_T_B&SortOrder=SO_PCDD&Currency=INR&PropertyTypes={property_code}&Bedrooms=GRS_B_{min_no_bedrooms}&Bathrooms=-1&CarSpaces=-1&Receptions=-1&ResidentialSizeUnit=SquareFeet&LandAreaUnit=Acre&Category=GRS_CAT_RES&Shapes=W10")
+        if url_property.status_code == 500:
+            return f"Could not find property."
+        content = url_property.content
+        with open(cfg.save_html_path/"savills.txt", "wb") as f:
+            f.write(content)
         return url_property
 
 def generate_llm_config(tool):
@@ -82,10 +90,13 @@ def generate_llm_config(tool):
 
 
 house_finder_tool = HouseFinderTool()
+agent = initialize_agent(
+    [HouseFinderTool()], cfg.llm, agent=AgentType.STRUCTURED_CHAT_ZERO_SHOT_REACT_DESCRIPTION, verbose=True
+)
 
 if __name__ == "__main__":
-    html = house_finder_tool.run('villa')
+    html = house_finder_tool.run('house with 2 bedrooms')
     logger.info(html)
-    content = html.content
-    with open("/tmp/savills.txt", "wb") as f:
-        f.write(content)
+    #content = html.content
+    #with open("/tmp/savills.txt", "wb") as f:
+        #f.write(content)

@@ -13,7 +13,7 @@ from langchain.prompts.chat import (
 )
 from langchain.chains import LLMChain
 
-import linkedin_summarizer.backend.agent as agents
+import linkedin_summarizer.backend.agents as agents
 from linkedin_summarizer.configuration.config import cfg
 from linkedin_summarizer.configuration.log_factory import logger
 from linkedin_summarizer.backend.tool import house_finder_tool
