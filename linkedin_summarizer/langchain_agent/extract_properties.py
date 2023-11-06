@@ -29,11 +29,9 @@ def prompt_factory(system_template, human_template):
 def extract_properties(user_input):
     schema = {
     "properties": {
-        "property type": {"type": "string", "examples": ["bungalow", "condominium","duplex", "apartment", "flat", "house", "penthouse", "service apartments", "studio", "triplex", "villa"]},
-        "minimum number of bedrooms": {"type": "integer"},
-        
+        "url": {"type": "string"}
     },
-    "required": ["property type", "minimum number of bedrooms"],
+    "required": ["url"],
     }
     #chain = LLMChain( llm=cfg.llm, prompt=prompt_factory(t.human_message, t.system_message))
     chain = create_extraction_chain(schema, cfg.llm)

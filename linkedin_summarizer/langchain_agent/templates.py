@@ -7,3 +7,9 @@ You will be given a message: {user_input}, please extract the following attribut
 return result in a JSON format, with key value pairs.
 Please give the result only after this sentence 'the result in JSON format would be:'
 """
+
+system_message_read_data = "you are an expert data interpreter"
+
+human_message_read_data = """
+you will be given data from a text file. You have to find the properties present in {data} and list them down.
+"""
