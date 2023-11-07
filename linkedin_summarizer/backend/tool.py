@@ -76,14 +76,10 @@ class HouseFinderTool(BaseTool):
             bedroom_code = MIN_BEDROOMS.get(no_of_bedrooms)
         logger.info(property_code)
         if property_code != None:
-            url = f"https://search.savills.com/in/en/list?SearchList=Id_1243+Category_RegionCountyCountry&Tenure=GRS_T_B&SortOrder=SO_PCDD&Currency=INR&PropertyTypes={property_code}&Bedrooms={bedroom_code}&Bathrooms=-1&CarSpaces=-1&Receptions=-1&ResidentialSizeUnit=SquareFeet&LandAreaUnit=Acre&Category=GRS_CAT_RES&Shapes=W10"
-
             url_property = requests.get(
                 f"https://search.savills.com/in/en/list?SearchList=Id_1243+Category_RegionCountyCountry&Tenure=GRS_T_B&SortOrder=SO_PCDD&Currency=INR&PropertyTypes={property_code}&Bedrooms={bedroom_code}&Bathrooms=-1&CarSpaces=-1&Receptions=-1&ResidentialSizeUnit=SquareFeet&LandAreaUnit=Acre&Category=GRS_CAT_RES&Shapes=W10"
             )
         else:
-            url = f"https://search.savills.com/in/en/list?SearchList=Id_1243+Category_RegionCountyCountry&Tenure=GRS_T_B&SortOrder=SO_PCDD&Currency=INR&&Bedrooms={bedroom_code}&Bathrooms=-1&CarSpaces=-1&Receptions=-1&ResidentialSizeUnit=SquareFeet&LandAreaUnit=Acre&Category=GRS_CAT_RES&Shapes=W10"
-
             url_property = requests.get(
                 f"https://search.savills.com/in/en/list?SearchList=Id_1243+Category_RegionCountyCountry&Tenure=GRS_T_B&SortOrder=SO_PCDD&Currency=INR&&Bedrooms={bedroom_code}&Bathrooms=-1&CarSpaces=-1&Receptions=-1&ResidentialSizeUnit=SquareFeet&LandAreaUnit=Acre&Category=GRS_CAT_RES&Shapes=W10"
             )
@@ -91,7 +87,7 @@ class HouseFinderTool(BaseTool):
             content_html = url_property.content
             with open(cfg.save_html_path / "savills.txt", "wb") as f:
                 f.write(content_html)
-            return url
+            return True
 
         elif url_property.status_code >= 500:
             return "Server Error"
@@ -99,7 +95,6 @@ class HouseFinderTool(BaseTool):
             return "Bad Request"
         else:
             return f"{url_property.status_code},Unkown Error"
-
 
     def extract_text_html(self, content_html):
         html_text = BeautifulSoup(content_html, features="html.parser")
@@ -137,10 +132,12 @@ if __name__ == "__main__":
     import webbrowser
 
     url = agent.run("I want to buy a bangalow of 4 bedrooms")
-    url = agent.invoke({"input": "I want to buy a bangalow of 4 bedrooms"}, )
+    url = agent.invoke(
+        {"input": "I want to buy a bangalow of 4 bedrooms"},
+    )
     logger.info(url)
     # content = html.content
     # with open("/tmp/savills.txt", "wb") as f:
     # f.write(content)
 
-    webbrowser.open(url) 
+    webbrowser.open(url)
