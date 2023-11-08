@@ -78,19 +78,23 @@ def create_soup(html):
     return soup
 
 
-def zip_details(property_name, property_details, realtor_name, property_link):
-    mapped = zip(property_name, property_details, realtor_name, property_link)
+def zip_details(property_name, property_details, property_sizes, realtor_name, property_link):
+    mapped = zip(property_name, property_details, property_sizes, realtor_name, property_link)
     return mapped
 
 def property_size(soup):
     property_size_list = []
-    property_size = soup.select("div .sv-property-attribute sv--size")
-    for size in property_size:
-        logger.info(size.text)
-        #property_size_list.append(size.text)
-    #return property_size_list
+    div_elements = soup.find_all('div', class_='sv-property-attribute sv--size')
 
-    
+    # Find the span element inside the div
+    for div_element in div_elements:
+        span_element = div_element.find('span', class_='sv-property-attribute__value')
+        information = span_element.get_text()
+        #logger.info(information)
+        property_size_list.append(information)
+    return property_size_list
+
+
 
 def create_markdown(input_list):
     # Convert the list to a list of lists (each item is a separate list)
@@ -100,10 +104,12 @@ def create_markdown(input_list):
         data = {}
         data["property name"] = item[0]
         data['property details'] = item[1]
-        data['realtor name'] = item[2]
-        data['property link'] = item[3]
+        data['property sizes'] = item[2]
+        data['realtor name'] = item[3]
+        data['property link'] = item[4]
+        
         table_data.append(data)
-    logger.info(table_data)
+    #logger.info(table_data)
 
     markdown = ""
     for item in table_data:
@@ -116,8 +122,21 @@ def create_markdown(input_list):
         cfg.save_html_path / "savills_markdown.md", mode="wt", encoding="utf-8"
     ) as f:
         f.write(markdown)
+    
+    return markdown
 
 
+
+def create_zip(url_response):
+    soup = create_soup(url_response)
+    property_names = find_name_property(soup)
+    property_details = find_property_details(soup)
+    realtor_names = find_realtor(soup)
+    property_links = find_property_link(soup)
+    property_sizes = property_size(soup)
+    list_properties = (list(zip_details(property_names, property_details, property_sizes, realtor_names, property_links)))
+    markdown = create_markdown(list_properties)
+    return markdown
 
 if __name__ == "__main__":
     url_property = requests.get(
@@ -125,13 +144,6 @@ if __name__ == "__main__":
     )
     # logger.info(find_realtor(url_property))
     # html_loader("C:/tmp/html_savills/savills.txt")
-    soup = create_soup(url_property)
-    property_name = find_name_property(soup)
-    property_details = find_property_details(soup)
-    realtor_name = find_realtor(soup)
-    property_link = find_property_link(soup)
-    #property_sizes = property_size(soup)
-    #logger.info(property_sizes)
-    list_properties = (list(zip_details(property_name, property_details, realtor_name, property_link)))
-    #html_loader("C:/tmp/html_savills/savills.txt")
-    create_markdown(list_properties)
+    create_zip(url_property)
+   
+    #create_markdown(list_properties)

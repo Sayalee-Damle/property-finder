@@ -36,6 +36,7 @@ class Config:
         request_timeout=os.getenv("REQUEST_TIMEOUT"),
         cache=llm_cache,
         streaming=True,
+        verbose=True
     )
     save_html_path = Path(os.getenv("SAVE_HTML"))
 
