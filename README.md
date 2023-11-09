@@ -26,8 +26,8 @@ configure the .env file might like this:
 To specify configurations use .env file
 
 ```
-OPENAI_API_KEY = openaikey
-OPENAI_MODEL = gpt-3.5-turbo-16k-0613
+OPENAI_API_KEY= openai key
+OPENAI_MODEL = gpt-3.5-turbo-16k
 CHUNK_SIZE = 1000
 TERMINATE_TOKEN =  TERMINATE
 REQUEST_TIMEOUT = 300
@@ -35,6 +35,10 @@ SEED = 42
 TEMPERATURE = 0
 MAX_AUTO_REPLY = 4
 CODE_DIR = /tmp/linkedin_summarizer
+SAVE_HTML = /tmp/html_savills
+LLM_CACHE = False
+LANGCHAIN_DEBUG = True
+PROJECT_ROOT =  the root of your project
 ```
 ## Flow of the project function wise
 get_key --->  tool is used to find the keyword ---> create_get_message ---> find_houses
