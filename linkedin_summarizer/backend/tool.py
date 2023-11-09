@@ -34,6 +34,8 @@ PROPERTY_TYPES = {
     "serviced appartment": "GRS_PT_SAPT",
     "studio": "GRS_PT_STU",
     "triplex": "GRS_PT_T",
+    "building plot": "GRS_PT_BP",
+
 }
 
 MIN_BEDROOMS = {
@@ -69,7 +71,10 @@ FEATURES = {
     "swimming pool":"GRS_FTR_SP",
     "tennis court":"GRS_FTR_TC",
     "spa":"GRS_FTR_SPA",
-    "fireplace":"GRS_FTR_FP"
+    "fireplace":"GRS_FTR_FP",
+    "garage": "GRS_FTR_GAR",
+    "off=street-parking":"GRS_FTR_OSP",
+    "period": "GRS_FTR_PRD",
 }
 
 ## GRS_BT_4
@@ -117,6 +122,7 @@ class HouseFinderTool(BaseTool):
                     feature_code: str = feature_code + ',' + FEATURES.get(feature.lower())
         else:
             feature_code = ""
+        logger.info(property_code)
         logger.info(feature_code)
         if property_code != None:
             property_code = '&PropertyTypes=' + property_code
@@ -124,22 +130,22 @@ class HouseFinderTool(BaseTool):
             property_code =""
         url_site = f"https://search.savills.com/in/en/list?SearchList=Id_1243+Category_RegionCountyCountry&Tenure=GRS_T_B&SortOrder=SO_PCDD&Currency=INR{property_code}&Bedrooms={bedroom_code}&Bathrooms={bathroom_code}{feature_code}&CarSpaces=-1&Receptions=-1&ResidentialSizeUnit=SquareFeet&LandAreaUnit=Acre&Category=GRS_CAT_RES&Shapes=W10"
 
-        url_for_properties = requests.get( url_site
+        url_for_houses = requests.get( url_site
         )
         logger.info(url_site)
-        if url_for_properties.status_code == 200:
-            content_html = url_for_properties.content
+        if url_for_houses.status_code == 200:
+            content_html = url_for_houses.content
             with open(cfg.save_html_path / "savills.txt", "wb") as f:
                 f.write(content_html)
-            list_properties_markdown = data_read.create_zip(url_for_properties)
+            list_properties_markdown = data_read.create_zip(url_for_houses)
             return list_properties_markdown
 
-        elif url_for_properties.status_code >= 500:
+        elif url_for_houses.status_code >= 500:
             return "Server Error"
-        elif url_for_properties.status_code >= 400:
+        elif url_for_houses.status_code >= 400:
             return "Bad Request"
         else:
-            return f"{url_for_properties.status_code},Unkown Error"
+            return f"{url_for_houses.status_code},Unkown Error"
 
     def extract_text_html(self, content_html):
         html_text = BeautifulSoup(content_html, features="html.parser")
@@ -172,18 +178,19 @@ def generate_llm_config(tool):
 
 system_message =SystemMessage(content = """
 # Main Purpose
--You are a polite real estate agent who helps customers to find properties
+-You are a polite Indian real estate agent who helps customers to find properties
 
 # Dialect
 - Utilize polite American English with expressions prevalent in the property market
 
 # Personality
-- Portray a warm, approachable female property agent
+- Portray a warm, approachable female property agent 
 
 # Interaction
 - Response to inquiries about property but not about other subject. If someone asks about topics unrelated to the real estate market, please tell them that you do not know about it
 - Reply to the queries using markdown dialect
-- Please do not ask follow up questions like eg:Please let me know if you need more information about any of these properties""")
+- Please do not ask follow up questions like eg:Please let me know if you need more information about any of these properties
+- If anyone asks about a property outside of India, please reply that you do not deal with these properties""")
 
 agent_kwargs = {"system_message": system_message}
 
